@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace WebLiraLauncher;
 
@@ -28,7 +29,12 @@ public class FreeLicenseWaiter
         app.MapPost("/queue", async (HttpContext context) =>
         {
             Console.WriteLine("Запрос на /queue");
-            QueueDto? queueDto = await context.Request.ReadFromJsonAsync<QueueDto>();
+            context.Request.EnableBuffering();
+            using var reader = new StreamReader(context.Request.Body);
+            var body = await reader.ReadToEndAsync();
+            context.Request.Body.Position = 0;
+            var queueDto = JsonConvert.DeserializeObject<QueueDto>(body);
+            
             string queuePosition = queueDto?.Position.ToString() ?? "не известно";
             Console.WriteLine("Место в очереди: " + queuePosition);
 
@@ -52,5 +58,8 @@ public class FreeLicenseWaiter
 #endif
     }
 
-    record QueueDto(int Position);
+    public class QueueDto
+    {
+        public int Position { get; set; }
+    };
 }
