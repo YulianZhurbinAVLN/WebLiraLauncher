@@ -32,7 +32,6 @@ public class FreeLicenseWaiter
 
         app.MapPost("/queue", async (HttpContext context) =>
         {
-            Console.WriteLine("Запрос на /queue");
             context.Request.EnableBuffering();
             using var reader = new StreamReader(context.Request.Body);
             var body = await reader.ReadToEndAsync();

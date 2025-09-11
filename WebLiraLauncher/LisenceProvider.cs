@@ -1,9 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Security.Policy;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Windows.Media.Protection.PlayReady;
 
 namespace WebLiraLauncher;
 
@@ -12,29 +9,31 @@ public class LisenceProvider
     public bool IsThereFreeLicense()
     {
         using HttpClient client = new();
-        //Task<IsKeyAvailiableDto?> task = client.GetFromJsonAsync<IsKeyAvailiableDto>("http://localhost:5283/v1/balancer/keys");
+        //Task<IsKeyAvailiableDto?> task = client.GetFromJsonAsync<IsKeyAvailableDto>("http://localhost:5283/v1/balancer/keys");
 
         string ipAdress = FindLocalIpAdress();
 
         using var request = new HttpRequestMessage()
         {
-            RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
-            //RequestUri = new Uri("http://192.168.6.239:5283/v1/balancer/keys"),
+            //RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
+            RequestUri = new Uri("http://192.168.6.239:5283/v1/balancer/keys"),
             //RequestUri = new Uri("http://localhost:5283/v1/balancer/keys"),
             Method = HttpMethod.Get
         };
         request.Headers.Add("X-Forwarded-For", ipAdress);
 
-        string? json = GetResultFromResponse(request, client);
+        string? result = GetResultFromResponse(request, client);
 
-        if (json is null)
+        Console.WriteLine(result);
+
+        if (result is null)
         {
             return false;
-        }    
+        }
         else
         {
-            IsKeyAvailiableDto? isKeyAvailiableDto = JsonConvert.DeserializeObject<IsKeyAvailiableDto>(json);
-            bool isThereFreeLicense = isKeyAvailiableDto?.IsKeyAvailiable ?? false;
+            IsKeyAvailableDto? isKeyAvailableDto = JsonConvert.DeserializeObject<IsKeyAvailableDto>(result);
+            bool isThereFreeLicense = isKeyAvailableDto?.IsKeyAvailable ?? false;
 
 #if DEBUG
             Console.WriteLine("Is there a free lisence? " + isThereFreeLicense);
@@ -42,6 +41,15 @@ public class LisenceProvider
 
             return isThereFreeLicense;
         }
+
+        #region Alternative Version
+        //    IsKeyAvailableDto? isKeyAvailableDto = client.GetFromJsonAsync<IsKeyAvailableDto>(
+        //"http://192.168.6.239:5283/v1/balancer/keys").GetAwaiter().GetResult();
+
+        //    bool isThereFreeLicense = isKeyAvailableDto?.IsKeyAvailable ?? false;
+        //    Console.WriteLine("Is there a free lisence? " + isThereFreeLicense);
+        //    return isThereFreeLicense; 
+        #endregion
     }
 
     private static string FindLocalIpAdress()
@@ -76,7 +84,9 @@ public class LisenceProvider
         return !response.IsSuccessStatusCode ? null : response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
     }
 }
-public class IsKeyAvailiableDto
+
+//public record IsKeyAvailableDto(bool IsKeyAvailable);
+public class IsKeyAvailableDto
 {
-    public bool IsKeyAvailiable { get; set; }
+    public bool IsKeyAvailable { get; set; }
 }
