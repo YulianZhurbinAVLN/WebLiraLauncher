@@ -10,6 +10,10 @@ public class FreeLicenseWaiter
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")
                         ?? "http://localhost:7136");
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(7136);
+        });
         var app = builder.Build();
 
         LiraLauncher.LaunchCompleted += () => app.StopAsync();

@@ -17,12 +17,12 @@ public class LisenceProvider
 
         using var request = new HttpRequestMessage()
         {
-            //RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
+            RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
             //RequestUri = new Uri("http://192.168.6.239:5283/v1/balancer/keys"),
-            RequestUri = new Uri("http://localhost:5283/v1/balancer/keys"),
+            //RequestUri = new Uri("http://localhost:5283/v1/balancer/keys"),
             Method = HttpMethod.Get
         };
-        request.Headers.Add("X-Forwarded-For", "127.0.0.1" );
+        request.Headers.Add("X-Forwarded-For", ipAdress );
 
         using var response = client.Send(request);
         IsKeyAvailiableDto? isKeyAvailiableDto = response.Content.ReadFromJsonAsync<IsKeyAvailiableDto>().GetAwaiter().GetResult();
