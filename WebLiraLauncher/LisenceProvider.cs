@@ -6,51 +6,30 @@ namespace WebLiraLauncher;
 
 public class LisenceProvider
 {
+    const string REQUEST_URI = "http://192.168.1.103:5283/v1/balancer/keys";
+    //Test uris
+    //const string REQUEST_URI = "http://192.168.6.239:5283/v1/balancer/keys";
+    //const string REQUEST_URI = "http://localhost:5283/v1/balancer/keys";
+
     public bool IsThereFreeLicense()
     {
         using HttpClient client = new();
-        string ipAdress = FindLocalIpAdress();
+        string ipAddress = FindLocalIpAddress();
 
         using var request = new HttpRequestMessage()
         {
-            RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
-            //RequestUri = new Uri("http://192.168.6.239:5283/v1/balancer/keys"),
-            //RequestUri = new Uri("http://localhost:5283/v1/balancer/keys"),
+            RequestUri = new Uri(REQUEST_URI),
             Method = HttpMethod.Get
         };
-        request.Headers.Add("X-Forwarded-For", ipAdress);
+        request.Headers.Add("X-Forwarded-For", ipAddress);
 
-        string? result = GetResultFromResponse(request, client);
-
-        Console.WriteLine(result);
-
-        if (result is null)
-        {
-            return false;
-        }
-        else
-        {
-            IsKeyAvailableDto? isKeyAvailableDto = JsonConvert.DeserializeObject<IsKeyAvailableDto>(result);
-            bool isThereFreeLicense = isKeyAvailableDto?.IsKeyAvailable ?? false;
-
-#if DEBUG
-            Console.WriteLine("Is there a free lisence? " + isThereFreeLicense);
-#endif
-
-            return isThereFreeLicense;
-        }
-
-        #region Alternative Version
-        //    IsKeyAvailableDto? isKeyAvailableDto = client.GetFromJsonAsync<IsKeyAvailableDto>(
-        //"http://192.168.6.239:5283/v1/balancer/keys").GetAwaiter().GetResult();
-
-        //    bool isThereFreeLicense = isKeyAvailableDto?.IsKeyAvailable ?? false;
-        //    Console.WriteLine("Is there a free lisence? " + isThereFreeLicense);
-        //    return isThereFreeLicense; 
-        #endregion
+        string result = GetResultFromResponse(request, client);
+        IsKeyAvailableDto? isKeyAvailableDto = JsonConvert.DeserializeObject<IsKeyAvailableDto>(result);
+        bool isThereFreeLicense = isKeyAvailableDto?.IsKeyAvailable ?? false;
+        return isThereFreeLicense;
     }
 
-    private static string FindLocalIpAdress()
+    private static string FindLocalIpAddress()
     {
         try
         {
@@ -59,31 +38,43 @@ public class LisenceProvider
 
             foreach (IPAddress ipAddress in hostEntry.AddressList)
             {
-                // Фильтруем только IPv4 адреса (локальные)
+                //Находим IPv4 адрес
                 if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    Console.WriteLine($"Локальный IP-адрес: {ipAddress}");
-                    return ipAddress.ToString(); // Выходим из цикла после первого найденного IPv4
-                }
+                    return ipAddress.ToString();
             }
+
+            throw new InvalidOperationException("Не удалось получить доступ к локальному IPv4 адресу.");
         }
         catch (SocketException ex)
         {
-            Console.WriteLine($"Ошибка при получении IP-адреса: {ex.Message}");
+            throw new InvalidOperationException(ex.ToString());
         }
-
-        return string.Empty;
     }
 
-    private static string? GetResultFromResponse(HttpRequestMessage request, HttpClient client)
+    private static string GetResultFromResponse(HttpRequestMessage request, HttpClient client)
     {
-        HttpResponseMessage response = client.Send(request);
-        return !response.IsSuccessStatusCode ? null : response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        try
+        {
+            HttpResponseMessage response = client.Send(request);
+            if (response.IsSuccessStatusCode)
+            {
+                string result = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                return result;
+            }
+            else
+            {
+                throw new InvalidOperationException("При запросе лицензии возникла ошибка на стороне сервера");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            throw new InvalidOperationException("Сервер, предоставляющий лицензии, не отвечает. " +
+                "Попробуйте запустить приложение позже");
+        }
     }
-}
 
-//public record IsKeyAvailableDto(bool IsKeyAvailable);
-public class IsKeyAvailableDto
-{
-    public bool IsKeyAvailable { get; set; }
+    private class IsKeyAvailableDto
+    {
+        public bool IsKeyAvailable { get; set; }
+    }
 }

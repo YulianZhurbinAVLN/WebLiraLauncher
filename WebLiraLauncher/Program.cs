@@ -19,12 +19,16 @@ public class Program
                 //Проверяем наличие свободной лицензии
                 isThereFreeLicense = lisenceProvider.IsThereFreeLicense();
             }
-            catch (AggregateException)
+            catch (InvalidOperationException ex)
             {
-                MessageBox.Show("Сервер, предоставляющий лицензии, не отвечает. " +
-                    "Попробуйте запустить приложение позже");
+                Console.ForegroundColor = ConsoleColor.Red;
+                MessageBox.Show(ex.Message);
+                Console.ReadKey();
                 return;
             }
+
+            //HACK: Debug code
+            //isThereFreeLicense = false;
 
             if (isThereFreeLicense)
             {
@@ -32,11 +36,9 @@ public class Program
             }
             else
             {
-                //Console.WriteLine("Постановка пользователя в очередь на получение лицензии" +
-                //    Environment.NewLine + "Ожидание своей очереди");
-
+                //Ожидаем появления свободной лицензии, затем запускаем Лиру
                 FreeLicenseWaiter lisenceWaiter = new();
-                lisenceWaiter.Wait();
+                lisenceWaiter.LaunchLira();
             }
         }
     }

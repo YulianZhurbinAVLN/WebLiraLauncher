@@ -5,7 +5,9 @@ namespace WebLiraLauncher;
 
 public class FreeLicenseWaiter
 {
-    public void Wait()
+    private string _positionInQueue = null!;
+
+    public void LaunchLira()
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")
@@ -36,11 +38,9 @@ public class FreeLicenseWaiter
             using var reader = new StreamReader(context.Request.Body);
             var body = await reader.ReadToEndAsync();
             context.Request.Body.Position = 0;
-            var queueDto = JsonConvert.DeserializeObject<QueueDto>(body);
-            
+            var queueDto = JsonConvert.DeserializeObject<QueueDto>(body);           
             string queuePosition = queueDto?.Position.ToString() ?? "не известно";
-            Console.WriteLine("Место в очереди: " + queuePosition);
-
+            ShowPositionInQueue(queuePosition);
             context.Response.StatusCode = 200;
         });
 
@@ -48,7 +48,7 @@ public class FreeLicenseWaiter
         {
             Thread.Sleep(500);
             Console.SetWindowSize(50, 10);
-            //Console.Clear();
+            Console.Clear();
             Console.WriteLine("Нет свободных лицензий" + Environment.NewLine + 
                 "Постановка в очередь на получение лицензии" +
                 Environment.NewLine + "Ожидание своей очереди");
@@ -57,11 +57,21 @@ public class FreeLicenseWaiter
         app.Run();
 
 #if DEBUG
-        Console.WriteLine("Server's stopped");
+        Console.WriteLine("Server has stopped");
 #endif
     }
 
-    public class QueueDto
+    private void ShowPositionInQueue(string queuePosition)
+    {
+        //Если место пользователя в очереди изменилось, то выводим об этом информацию
+        if(queuePosition != _positionInQueue)
+        {
+            _positionInQueue = queuePosition;
+            Console.WriteLine("Место в очереди: " + _positionInQueue);
+        }
+    }
+
+    private class QueueDto
     {
         public int Position { get; set; }
     };
