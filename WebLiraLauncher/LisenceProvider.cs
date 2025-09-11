@@ -1,6 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Security.Policy;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Windows.Media.Protection.PlayReady;
 
 namespace WebLiraLauncher;
 
@@ -10,8 +13,6 @@ public class LisenceProvider
     {
         using HttpClient client = new();
         //Task<IsKeyAvailiableDto?> task = client.GetFromJsonAsync<IsKeyAvailiableDto>("http://localhost:5283/v1/balancer/keys");
-        //Task<IsKeyAvailiableDto?> task = client.GetFromJsonAsync<IsKeyAvailiableDto>("http://192.168.1.103:5283/v1/balancer/keys");
-        //bool isThereFreeLicense = task.Result?.IsKeyAvailiable ?? false;
 
         string ipAdress = FindLocalIpAdress();
 
@@ -22,18 +23,25 @@ public class LisenceProvider
             //RequestUri = new Uri("http://localhost:5283/v1/balancer/keys"),
             Method = HttpMethod.Get
         };
-        request.Headers.Add("X-Forwarded-For", ipAdress );
+        request.Headers.Add("X-Forwarded-For", ipAdress);
 
-        using var response = client.Send(request);
-        IsKeyAvailiableDto? isKeyAvailiableDto = response.Content.ReadFromJsonAsync<IsKeyAvailiableDto>().GetAwaiter().GetResult();
-        bool isThereFreeLicense = isKeyAvailiableDto?.IsKeyAvailiable ?? false;
-        //bool isThereFreeLicense = false;
+        string? json = GetResultFromResponse(request, client);
+
+        if (json is null)
+        {
+            return false;
+        }    
+        else
+        {
+            IsKeyAvailiableDto? isKeyAvailiableDto = JsonConvert.DeserializeObject<IsKeyAvailiableDto>(json);
+            bool isThereFreeLicense = isKeyAvailiableDto?.IsKeyAvailiable ?? false;
 
 #if DEBUG
-        Console.WriteLine("Is there a free lisence? " + isThereFreeLicense);
+            Console.WriteLine("Is there a free lisence? " + isThereFreeLicense);
 #endif
 
-        return isThereFreeLicense;
+            return isThereFreeLicense;
+        }
     }
 
     private static string FindLocalIpAdress()
@@ -48,18 +56,27 @@ public class LisenceProvider
                 // Фильтруем только IPv4 адреса (локальные)
                 if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    Console.WriteLine($"Локальный IP-адрес: {ipAddress.ToString()}");
+                    Console.WriteLine($"Локальный IP-адрес: {ipAddress}");
                     return ipAddress.ToString(); // Выходим из цикла после первого найденного IPv4
                 }
             }
         }
         catch (SocketException ex)
         {
-            Console.WriteLine($"Ошибка при получении IP-адреса: {ex.Message}");          
+            Console.WriteLine($"Ошибка при получении IP-адреса: {ex.Message}");
         }
 
         return string.Empty;
     }
 
-    record IsKeyAvailiableDto(bool IsKeyAvailiable);
+    private static string? GetResultFromResponse(HttpRequestMessage request, HttpClient client)
+    {
+        //HttpResponseMessage response = Task.Run(async () => await client.SendAsync(request)).GetAwaiter().GetResult();
+        HttpResponseMessage response = client.Send(request);
+        return !response.IsSuccessStatusCode ? null : response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+    }
+}
+public class IsKeyAvailiableDto
+{
+    public bool IsKeyAvailiable { get; set; }
 }
