@@ -9,14 +9,12 @@ public class LisenceProvider
     public bool IsThereFreeLicense()
     {
         using HttpClient client = new();
-        //Task<IsKeyAvailiableDto?> task = client.GetFromJsonAsync<IsKeyAvailableDto>("http://localhost:5283/v1/balancer/keys");
-
         string ipAdress = FindLocalIpAdress();
 
         using var request = new HttpRequestMessage()
         {
-            //RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
-            RequestUri = new Uri("http://192.168.6.239:5283/v1/balancer/keys"),
+            RequestUri = new Uri("http://192.168.1.103:5283/v1/balancer/keys"),
+            //RequestUri = new Uri("http://192.168.6.239:5283/v1/balancer/keys"),
             //RequestUri = new Uri("http://localhost:5283/v1/balancer/keys"),
             Method = HttpMethod.Get
         };
@@ -79,7 +77,6 @@ public class LisenceProvider
 
     private static string? GetResultFromResponse(HttpRequestMessage request, HttpClient client)
     {
-        //HttpResponseMessage response = Task.Run(async () => await client.SendAsync(request)).GetAwaiter().GetResult();
         HttpResponseMessage response = client.Send(request);
         return !response.IsSuccessStatusCode ? null : response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
     }
