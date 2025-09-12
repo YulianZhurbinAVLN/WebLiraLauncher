@@ -1,12 +1,35 @@
 ﻿using LiraSapr;
 using System.Diagnostics;
+using System.Text;
 
 namespace WebLiraLauncher;
 
 public class LiraLauncher
 {
+    const string LIRA_PROCESS_NAME = "LiraSapr";
     public static event Action? LaunchCompleted;
         
+    public static bool IsLiraWorking()
+    {
+        Process[] allLiraProcesses = Process.GetProcessesByName(LIRA_PROCESS_NAME);
+
+        if (allLiraProcesses.Length > 0)
+        {
+            Process liraProcess = allLiraProcesses.First();
+            StringBuilder stringBuilder = new("ЛИРА САПР уже запущена");
+
+            if (liraProcess.MainWindowHandle == IntPtr.Zero)
+            {
+                stringBuilder.Append(" в фоновом режиме. Просто дважды щелкните левой клавишей мыши по ярлыку ЛИРЫ САПР");
+            }
+
+            MessageBox.Show(stringBuilder.ToString());
+            return true;
+        }
+
+        return false;
+    }
+
     public static void Launch()
     {
         LiraApplication app = null!;
@@ -51,7 +74,7 @@ public class LiraLauncher
 
     private static void CloseLira()
     {
-        Process[] liraProcesses = Process.GetProcessesByName("LiraSapr");
+        Process[] liraProcesses = Process.GetProcessesByName(LIRA_PROCESS_NAME);
         foreach (Process process in liraProcesses)
         {
             process.Kill();
