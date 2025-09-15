@@ -4,6 +4,8 @@ public class Program
 {
     public static void Main()
     {
+        Console.SetWindowSize(50, 10);
+
         if (LiraLauncher.IsLiraWorking())
         {
             return;

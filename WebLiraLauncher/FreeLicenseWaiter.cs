@@ -47,7 +47,6 @@ public class FreeLicenseWaiter
         Task.Run(() =>
         {
             Thread.Sleep(500);
-            Console.SetWindowSize(50, 10);
             Console.Clear();
             Console.WriteLine("Нет свободных лицензий" + Environment.NewLine + 
                 "Постановка в очередь на получение лицензии" +
