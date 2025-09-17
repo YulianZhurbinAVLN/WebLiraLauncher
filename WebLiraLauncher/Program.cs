@@ -4,6 +4,13 @@ public class Program
 {
     public static void Main()
     {
+        string mutexName = "865AA237-C0EC-4C6B-960C-EB8CFD4C99FA";
+        Mutex mutex = new(true, mutexName, out bool createdNew);
+
+        //Если уже есть запущенный экземпляр приложения, то закрываем текущий
+        if (!createdNew)
+            return;
+
         Console.SetWindowSize(50, 10);
 
         if (LiraLauncher.IsLiraWorking())
@@ -48,5 +55,6 @@ public class Program
             lisenceWaiter.LaunchLira();
         }
 
+        mutex.ReleaseMutex();
     }
 }

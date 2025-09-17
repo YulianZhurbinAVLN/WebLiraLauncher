@@ -57,6 +57,9 @@ public class LiraLauncher
         //нужен только для проверки наличия свободной лицензии
         app.ActiveDocument.Close();
 
+        //HACK: alternative way to launch Lira
+        //Process.Start(@"C:\Program Files (x86)\LIRA SAPR\LIRA SAPR 2024\Bin\x64\LiraSapr.exe");
+
         Task closingLira = new(() =>
         {
             //Время ожидания ответа от пользователя после того,
