@@ -1,5 +1,4 @@
-﻿using LiraSapr;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 
 namespace WebLiraLauncher;
@@ -32,33 +31,35 @@ public class LiraLauncher
 
     public static void Launch()
     {
-        LiraApplication app = null!;
-
-        try
-        {
-            app = new();
-
-            //Проверка наличия доступа к Лире.
-            //Создание нового документа не может быть выполнено,
-            //если нет свободной лицензии. В таком случае
-            //выбрасывается исключение
-            LiraDocument doc = app.CreateNewDocument();
-        }
-        catch (System.Runtime.InteropServices.COMException)
-        {
-            MessageBox.Show("Произошла ошибка при запуске Лиры. " +
-                "Попробуйте перезапустить приложение");
-            CloseLira();
-            LaunchCompleted?.Invoke();
-            return;
-        }
-
-        //Закрытие созданного документа, который
-        //нужен только для проверки наличия свободной лицензии
-        app.ActiveDocument.Close();
-
         //HACK: alternative way to launch Lira
-        //Process.Start(@"C:\Program Files (x86)\LIRA SAPR\LIRA SAPR 2024\Bin\x64\LiraSapr.exe");
+        #region 
+        //LiraApplication app = null!;
+
+        //try
+        //{
+        //    app = new();
+
+        //    //Проверка наличия доступа к Лире.
+        //    //Создание нового документа не может быть выполнено,
+        //    //если нет свободной лицензии. В таком случае
+        //    //выбрасывается исключение
+        //    LiraDocument doc = app.CreateNewDocument();
+        //}
+        //catch (System.Runtime.InteropServices.COMException)
+        //{
+        //    MessageBox.Show("Произошла ошибка при запуске Лиры. " +
+        //        "Попробуйте перезапустить приложение");
+        //    CloseLira();
+        //    LaunchCompleted?.Invoke();
+        //    return;
+        //}
+
+        ////Закрытие созданного документа, который
+        ////нужен только для проверки наличия свободной лицензии
+        //app.ActiveDocument.Close(); 
+        #endregion
+
+        Process.Start(@"C:\Program Files (x86)\LIRA SAPR\LIRA SAPR 2024\Bin\x64\LiraSapr.exe");
 
         Task closingLira = new(() =>
         {
